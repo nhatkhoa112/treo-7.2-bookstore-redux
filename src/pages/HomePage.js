@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Alert, Card, Col, Container, Row } from "react-bootstrap";
 import { ClipLoader } from "react-spinners";
-
+import { useDispatch, useSelector } from "react-redux";
+import bookActions from "../redux/actions/books.actions";
 import { useHistory } from "react-router-dom";
 import PaginationBar from "../components/PaginationBar";
 import SearchForm from "../components/SearchForm";
-import api from "../apiService";
 
 const BACKEND_API = process.env.REACT_APP_BACKEND_API;
 
 const HomePage = () => {
-  const [books, setBooks] = useState([]);
   const [pageNum, setPageNum] = useState(1);
   const totalPage = 10;
   const limit = 10;
-
-  const [loading, setLoading] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [query, setQuery] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage] = useState("");
 
   const history = useHistory();
 
@@ -35,24 +32,16 @@ const HomePage = () => {
     setQuery(searchInput);
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        let url = `/books?_page=${pageNum}&_limit=${limit}`;
-        if (query) url += `&q=${query}`;
-        const res = await api.get(url);
-        console.log(res);
-        setBooks(res.data);
-        setErrorMessage("");
-      } catch (error) {
-        setErrorMessage(error.message);
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [pageNum, limit, query]);
+  const dispatch = useDispatch();
 
+  useEffect(() => {
+    dispatch(bookActions.getBooks(pageNum, limit, query));
+  }, [dispatch, pageNum, limit, query]);
+  const state = useSelector(state => state);
+  const books = state.books.books;
+  const {loading} = state.books;
+
+  console.log(state)
   return (
     <Container>
       <Row className="justify-content-center">

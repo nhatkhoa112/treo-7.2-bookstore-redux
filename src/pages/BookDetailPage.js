@@ -2,50 +2,39 @@ import React, { useState, useEffect } from "react";
 import { Button, Col, Container, Row } from "react-bootstrap";
 import { ClipLoader } from "react-spinners";
 import { useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import api from "../apiService";
+import { useDispatch, useSelector } from "react-redux";
+import bookActions from "../redux/actions/books.actions";
 
 const BACKEND_API = process.env.REACT_APP_BACKEND_API;
 
 const BookDetailPage = () => {
-  const [loading, setLoading] = useState(false);
-  const [book, setBook] = useState(null);
+  
   const [addingBook, setAddingBook] = useState(false);
   const params = useParams();
   const bookId = params.id;
+  const state = useSelector(state => state);
+  const book = state.books.selectedBook;
+  const {loading} = state.books;
+  const {disable, setDisable} = useState(false)
+
 
   const addToReadingList = (book) => {
     setAddingBook(book);
   };
 
-  useEffect(() => {
-    const postData = async () => {
-      if (!addingBook) return;
-      setLoading(true);
-      try {
-        await api.post(`/favorites`, addingBook);
-        toast.success("The book has been added to the reading list!");
-      } catch (error) {
-        toast.error(error.message);
-      }
-      setLoading(false);
-    };
-    postData();
-  }, [addingBook]);
+
+
+  const dispatch = useDispatch()
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/books/${bookId}`);
-        setBook(res.data);
-      } catch (error) {
-        toast.error(error.message);
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [bookId]);
+    if (!addingBook) return;
+    dispatch(bookActions.postBookToFav(addingBook));
+  }, [addingBook, dispatch]);
+
+
+  useEffect(() => {
+    dispatch(bookActions.getBookDetail(bookId))
+  }, [bookId, dispatch]);
 
   return (
     <Container>
@@ -83,7 +72,7 @@ const BookDetailPage = () => {
                 <div>
                   <strong>Language:</strong> {book.language}
                 </div>
-                <Button onClick={() => addToReadingList(book)}>
+                <Button  onClick={() => addToReadingList(book)}>
                   Add to Reading List
                 </Button>{" "}
               </>

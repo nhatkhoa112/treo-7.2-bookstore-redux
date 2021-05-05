@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Card, Container, Row, Col, Button } from "react-bootstrap";
 import { ClipLoader } from "react-spinners";
-
 import { useHistory } from "react-router-dom";
-import { toast } from "react-toastify";
-import api from "../apiService";
+import { useDispatch, useSelector } from "react-redux";
+import bookActions from "../redux/actions/books.actions";
+
 
 const BACKEND_API = process.env.REACT_APP_BACKEND_API;
 
 const ReadingPage = () => {
-  const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [removedBookId, setRemovedBookId] = useState("");
   const history = useHistory();
+  const state = useSelector(state => state);
+  const books = state.books.readingList;
+  const {loading} = state.books
 
   const handleClickBook = (bookId) => {
     history.push(`/books/${bookId}`);
@@ -22,36 +23,18 @@ const ReadingPage = () => {
     setRemovedBookId(bookId);
   };
 
+  const dispatch = useDispatch();
+
   useEffect(() => {
     if (removedBookId) return;
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/favorites`);
-        setBooks(res.data);
-      } catch (error) {
-        toast(error.message);
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [removedBookId]);
+    dispatch(bookActions.getBookFav())
+  }, [removedBookId, dispatch]);
 
   useEffect(() => {
     if (!removedBookId) return;
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        await api.delete(`/favorites/${removedBookId}`);
-        toast.success("The book has been removed");
-        setRemovedBookId("");
-      } catch (error) {
-        toast(error.message);
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [removedBookId]);
+    dispatch(bookActions.removeBookFromFav(removedBookId));
+    setRemovedBookId("");
+  }, [removedBookId, dispatch]);
 
   return (
     <Container>
